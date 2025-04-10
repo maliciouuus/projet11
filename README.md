@@ -165,5 +165,4 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 ## Auteurs
 
 - Développeur initial - [OpenClassrooms](https://github.com/OpenClassrooms-Student-Center)
-- Améliorations et refactoring - [Votre nom]
-
+- Améliorations et refactoring - Sacha
