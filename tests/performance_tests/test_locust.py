@@ -40,12 +40,15 @@ class GUDLFTUser(HttpUser):
     AJOUT: Utilisateur simulé pour les tests de charge.
     Définit différents comportements pour tester les performances de l'application.
     Les tâches sont pondérées selon leur importance relative dans l'application.
-    
+
     Dans le projet original, il n'y avait aucun test de performance.
     Cette classe simule un utilisateur réel qui navigue sur l'application et
     effectue différentes actions avec des fréquences variables.
     """
-    wait_time = between(1, 3)  # Temps d'attente entre les tâches pour simuler le comportement humain
+
+    wait_time = between(
+        1, 3
+    )  # Temps d'attente entre les tâches pour simuler le comportement humain
 
     def on_start(self):
         """
@@ -53,7 +56,9 @@ class GUDLFTUser(HttpUser):
         Définit les données nécessaires pour les tests, comme l'email valide.
         Cette méthode est appelée une fois au démarrage de chaque utilisateur simulé.
         """
-        self.valid_email = "john@simplylift.co"  # Email d'un club existant pour les tests
+        self.valid_email = (
+            "john@simplylift.co"  # Email d'un club existant pour les tests
+        )
 
     @task(3)
     def view_home(self):
@@ -61,7 +66,7 @@ class GUDLFTUser(HttpUser):
         AJOUT: Tâche pour consulter la page d'accueil.
         Pondération plus élevée (3) car c'est la page la plus fréquemment visitée.
         Vérifie que la page d'accueil répond correctement et rapidement.
-        
+
         Cette tâche teste la fonctionnalité de base de l'application:
         - Temps de chargement de la page d'accueil
         - Disponibilité du service
@@ -78,7 +83,7 @@ class GUDLFTUser(HttpUser):
         AJOUT: Tâche pour consulter la page des points.
         Pondération moyenne (2) pour simuler une utilisation régulière.
         Vérifie que la page des points répond correctement.
-        
+
         Cette tâche teste l'affichage des points des clubs:
         - Temps de chargement de la page des points
         - Vérification que la page est accessible
@@ -93,7 +98,7 @@ class GUDLFTUser(HttpUser):
         AJOUT: Tâche pour tester l'API des points.
         Pondération moyenne (2) pour simuler une utilisation régulière.
         Vérifie que l'API répond correctement et renvoie un JSON valide.
-        
+
         Cette fonctionnalité est une exigence spécifique de la phase 2.
         La tâche teste:
         - Temps de réponse de l'API
@@ -107,7 +112,7 @@ class GUDLFTUser(HttpUser):
             else:
                 try:
                     data = response.json()
-                    if 'clubs' not in data:
+                    if "clubs" not in data:
                         response.failure("Format JSON incorrect")
                 except Exception as e:
                     response.failure(f"JSON invalide: {str(e)}")
@@ -118,7 +123,7 @@ class GUDLFTUser(HttpUser):
         AJOUT: Tâche pour tester le flux complet de réservation.
         Pondération plus faible (1) car c'est une opération moins fréquente.
         Simule un utilisateur qui se connecte puis effectue une réservation.
-        
+
         Cette tâche teste le scénario principal de l'application:
         - Login avec un email valide
         - Réservation de places pour une compétition
@@ -127,8 +132,8 @@ class GUDLFTUser(HttpUser):
         """
         # 1. Connexion
         with self.client.post(
-            "/showSummary",
-            data={"email": self.valid_email},
+            "/showSummary", 
+            data={"email": self.valid_email}, 
             catch_response=True
         ) as response:
             if response.status_code != 200:
@@ -141,9 +146,10 @@ class GUDLFTUser(HttpUser):
             data={
                 "club": "Simply Lift",
                 "competition": "Spring Festival",
-                "places": "1"  # Réserve une seule place pour éviter d'épuiser les points pendant les tests
+                "places": "1"  # Réserve une place pour éviter d'épuiser
+                               # les points pendant les tests
             },
-            catch_response=True
+            catch_response=True,
         ) as response:
             if response.status_code != 200:
-                response.failure("Échec de réservation") 
+                response.failure("Échec de réservation")

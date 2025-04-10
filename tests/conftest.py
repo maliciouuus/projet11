@@ -13,9 +13,9 @@ def client():
     """
     Fixture créant un client de test Flask.
     """
-    app.config['TESTING'] = True
-    app.config['SERVER_NAME'] = 'localhost'
-    app.config['WTF_CSRF_ENABLED'] = False
+    app.config["TESTING"] = True
+    app.config["SERVER_NAME"] = "localhost"
+    app.config["WTF_CSRF_ENABLED"] = False
 
     with app.test_client() as client:
         client.environment_preserve_context = True
@@ -31,7 +31,7 @@ def clubs():
     return [
         {"name": "Simply Lift", "email": "john@simplylift.co", "points": 13},
         {"name": "Iron Temple", "email": "admin@irontemple.com", "points": 4},
-        {"name": "She Lifts", "email": "kate@shelifts.co.uk", "points": 12}
+        {"name": "She Lifts", "email": "kate@shelifts.co.uk", "points": 12},
     ]
 
 
@@ -46,15 +46,21 @@ def competitions():
     past_date = datetime.now() - timedelta(days=1)
 
     return [
-        {"name": "Spring Festival",
-         "date": future_date1.strftime("%Y-%m-%d %H:%M:%S"),
-         "numberOfPlaces": 25},
-        {"name": "Fall Classic",
-         "date": future_date2.strftime("%Y-%m-%d %H:%M:%S"),
-         "numberOfPlaces": 13},
-        {"name": "Past Competition",
-         "date": past_date.strftime("%Y-%m-%d %H:%M:%S"),
-         "numberOfPlaces": 13}
+        {
+            "name": "Spring Festival",
+            "date": future_date1.strftime("%Y-%m-%d %H:%M:%S"),
+            "numberOfPlaces": 25,
+        },
+        {
+            "name": "Fall Classic",
+            "date": future_date2.strftime("%Y-%m-%d %H:%M:%S"),
+            "numberOfPlaces": 13,
+        },
+        {
+            "name": "Past Competition",
+            "date": past_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "numberOfPlaces": 13,
+        },
     ]
 
 
@@ -65,35 +71,45 @@ def setup_test_data(clubs, competitions):
     et nettoie après.
     """
     # Sauvegarde des données de test
-    with open('clubs.json', 'w') as f:
-        json.dump({"clubs": [
-            {**club, "points": str(club["points"])} for club in clubs
-        ]}, f)
+    with open("clubs.json", "w") as f:
+        json.dump(
+            {"clubs": [{**club, "points": str(club["points"])} for club in clubs]}, f
+        )
 
-    with open('competitions.json', 'w') as f:
-        json.dump({"competitions": [
-            {**comp, "numberOfPlaces": str(comp["numberOfPlaces"])}
-            for comp in competitions
-        ]}, f)
+    with open("competitions.json", "w") as f:
+        json.dump(
+            {
+                "competitions": [
+                    {**comp, "numberOfPlaces": str(comp["numberOfPlaces"])}
+                    for comp in competitions
+                ]
+            },
+            f,
+        )
 
     # Réinitialiser les réservations
-    with open('bookings.json', 'w') as f:
+    with open("bookings.json", "w") as f:
         json.dump({}, f)
 
     yield
 
     # Nettoyage après chaque test
-    with open('clubs.json', 'w') as f:
-        json.dump({"clubs": [
-            {**club, "points": str(club["points"])} for club in clubs
-        ]}, f)
+    with open("clubs.json", "w") as f:
+        json.dump(
+            {"clubs": [{**club, "points": str(club["points"])} for club in clubs]}, f
+        )
 
-    with open('competitions.json', 'w') as f:
-        json.dump({"competitions": [
-            {**comp, "numberOfPlaces": str(comp["numberOfPlaces"])}
-            for comp in competitions
-        ]}, f)
+    with open("competitions.json", "w") as f:
+        json.dump(
+            {
+                "competitions": [
+                    {**comp, "numberOfPlaces": str(comp["numberOfPlaces"])}
+                    for comp in competitions
+                ]
+            },
+            f,
+        )
 
     # Réinitialiser les réservations
-    with open('bookings.json', 'w') as f:
+    with open("bookings.json", "w") as f:
         json.dump({}, f)

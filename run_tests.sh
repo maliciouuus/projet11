@@ -110,19 +110,26 @@ run_locust_headless() {
     python3 -m locust -f tests/performance_tests/test_locust.py --headless -u 6 -r 1 --run-time 30s --host=http://localhost:$FLASK_PORT
 }
 
-# Fonction pour exécuter tous les tests (unitaires et performance)
-run_all_tests() {
-    # Exécuter d'abord les tests unitaires et d'intégration
-    run_unit_integration_tests
+# Fonction pour générer un rapport Flake8
+generate_flake8_report() {
+    echo -e "${BLUE}=== Génération du rapport Flake8 ===${NC}\n"
     
-    # Démarrer le serveur Flask pour les tests de performance
-    start_flask_server
+    # Vérifier si le répertoire reports existe, sinon le créer
+    if [ ! -d "reports" ]; then
+        mkdir -p reports
+    fi
     
-    # Exécuter les tests de performance en mode headless
-    run_locust_headless
+    # Générer le rapport HTML
+    echo -e "${BLUE}Analyse du code avec Flake8...${NC}"
+    python3 -m flake8 --format=html --htmldir=reports/flake8 gudlft/ tests/
     
-    # Arrêter le serveur Flask
-    stop_flask_server
+    echo -e "\n${GREEN}Rapport Flake8 généré avec succès.${NC}"
+    echo -e "${GREEN}Le rapport est disponible dans: reports/flake8/index.html${NC}"
+    
+    # Afficher un résumé des problèmes trouvés
+    echo -e "\n${BLUE}Résumé des problèmes Flake8:${NC}"
+    python3 -m flake8 gudlft/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics
+    python3 -m flake8 gudlft/ tests/ --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
 }
 
 # Assurer que le serveur Flask est arrêté à la fin du script
@@ -155,7 +162,7 @@ echo ""
 echo "1) Exécuter les tests unitaires et d'intégration"
 echo "2) Lancer Locust (interface web)"
 echo "3) Lancer Locust (mode headless)"
-echo "4) Exécuter tous les tests (unitaires + performance)"
+echo "4) Générer un rapport Flake8"
 echo "5) Quitter"
 echo ""
 read -p "Votre choix (1-5) : " choice
@@ -175,7 +182,7 @@ case $choice in
         # Le serveur Flask sera arrêté par le trap EXIT
         ;;
     4)
-        run_all_tests
+        generate_flake8_report
         ;;
     5)
         echo -e "${GREEN}Au revoir !${NC}"

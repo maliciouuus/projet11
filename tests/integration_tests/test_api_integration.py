@@ -33,13 +33,13 @@ programmable standardisée.
 
 import pytest
 import json
-from gudlft.server import app
+from gudlft.server import app, cache
 
 
 @pytest.fixture
 def client():
     """Fixture pour le client de test Flask."""
-    app.config['TESTING'] = True
+    app.config["TESTING"] = True
     with app.test_client() as client:
         yield client
 
@@ -52,36 +52,43 @@ def test_api_points_reflects_changes(client):
     1. Les points initiaux sont récupérés via l'API
     2. Une réservation est effectuée, ce qui devrait réduire les points
     3. L'API renvoie bien les points mis à jour
-    
+
     Cette fonctionnalité fait partie des exigences de la phase 2 pour fournir
     une API RESTful permettant l'accès aux données des clubs.
     """
+    # CORRECTION: Vider le cache avant le test
+    cache.clear()
+
     # 1. Vérifier les points initiaux via l'API
-    response = client.get('/api/points')
+    response = client.get("/api/points")
     data = json.loads(response.data)
     initial_points = next(
-        club['points'] 
-        for club in data['clubs']
-        if club['name'] == 'Simply Lift'
+        club["points"] for club in data["clubs"] if club["name"] == "Simply Lift"
     )
-    
+
     # 2. Faire une réservation
-    client.post('/showSummary', data={'email': 'john@simplylift.co'})
-    client.post('/purchasePlaces', data={
-        'club': 'Simply Lift',
-        'competition': 'Spring Festival',
-        'places': '3'
-    })
-    
+    client.post("/showSummary", data={"email": "john@simplylift.co"})
+    response = client.post(
+        "/purchasePlaces",
+        data={"club": "Simply Lift", "competition": "Spring Festival", "places": "3"},
+        follow_redirects=True,
+    )
+
+    # Vérifier que la réservation a bien été effectuée
+    assert b"Great-booking complete!" in response.data
+
+    # CORRECTION: Vider le cache après la réservation
+    cache.clear()
+
     # 3. Vérifier que l'API renvoie les points mis à jour
-    response = client.get('/api/points')
+    response = client.get("/api/points")
     data = json.loads(response.data)
     updated_points = next(
-        club['points'] 
-        for club in data['clubs']
-        if club['name'] == 'Simply Lift'
+        club["points"] for club in data["clubs"] if club["name"] == "Simply Lift"
     )
-    
+
     # Vérifier que les points ont été mis à jour
     assert isinstance(updated_points, int)  # Vérification du type de données
-    assert updated_points < initial_points  # Points devraient diminuer après réservation 
+    assert (
+        updated_points < initial_points
+    )  # Points devraient diminuer après réservation

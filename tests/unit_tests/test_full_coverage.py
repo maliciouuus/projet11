@@ -10,19 +10,22 @@ import json
 import os
 from unittest.mock import patch, MagicMock, mock_open
 from gudlft.server import (
-    app, get_club_competition_bookings,
-    save_booking, is_competition_open,
-    not_found_error, internal_error
+    app,
+    get_club_competition_bookings,
+    save_booking,
+    is_competition_open,
+    not_found_error,
+    internal_error,
 )
 
 
 @pytest.fixture
 def client():
     """Fixture pour le client de test Flask."""
-    app.config['TESTING'] = True
-    app.config['WTF_CSRF_ENABLED'] = False
+    app.config["TESTING"] = True
+    app.config["WTF_CSRF_ENABLED"] = False
     with app.test_client() as client:
-        client.environ_base['HTTP_REFERER'] = 'http://localhost/'
+        client.environ_base["HTTP_REFERER"] = "http://localhost/"
         yield client
 
 
@@ -45,7 +48,7 @@ def test_get_club_competition_bookings_new_file():
     que la fonction renvoie 0 comme valeur par défaut, ce qui permet à l'application
     de continuer à fonctionner même si le fichier de réservations n'existe pas encore.
     """
-    with patch('builtins.open', side_effect=FileNotFoundError):
+    with patch("builtins.open", side_effect=FileNotFoundError):
         result = get_club_competition_bookings("Test Club", "Test Competition")
         assert result == 0
 
@@ -57,8 +60,8 @@ def test_get_club_competition_bookings_invalid_json():
     que la fonction gère cette erreur et renvoie 0 comme valeur par défaut.
     Ce test couvre un cas d'erreur important pour la robustesse de l'application.
     """
-    with patch('builtins.open', mock_open(read_data="invalid json")):
-        with patch('json.load', side_effect=json.JSONDecodeError("Test error", "", 0)):
+    with patch("builtins.open", mock_open(read_data="invalid json")):
+        with patch("json.load", side_effect=json.JSONDecodeError("Test error", "", 0)):
             result = get_club_competition_bookings("Test Club", "Test Competition")
             assert result == 0
 
@@ -71,8 +74,8 @@ def test_save_booking_new_file():
     Ce test couvre le cas où l'application est utilisée pour la première fois.
     """
     m = mock_open()
-    with patch('builtins.open', side_effect=[FileNotFoundError, m()]):
-        with patch('json.dump') as mock_dump:
+    with patch("builtins.open", side_effect=[FileNotFoundError, m()]):
+        with patch("json.dump") as mock_dump:
             save_booking("Test Club", "Test Competition", 5)
             mock_dump.assert_called_once()
 
@@ -85,9 +88,11 @@ def test_save_booking_invalid_json():
     Ce test renforce la robustesse de la gestion des erreurs dans l'application.
     """
     m = mock_open()
-    with patch('builtins.open', side_effect=[mock_open()(read_data="invalid json"), m()]):
-        with patch('json.load', side_effect=json.JSONDecodeError("Test error", "", 0)):
-            with patch('json.dump') as mock_dump:
+    with patch(
+        "builtins.open", side_effect=[mock_open()(read_data="invalid json"), m()]
+    ):
+        with patch("json.load", side_effect=json.JSONDecodeError("Test error", "", 0)):
+            with patch("json.dump") as mock_dump:
                 save_booking("Test Club", "Test Competition", 5)
                 mock_dump.assert_called_once()
 
@@ -98,7 +103,7 @@ def test_404_error_handler():
     Vérifie que le gestionnaire d'erreur 404 renvoie le bon template et code de statut.
     Ce test s'assure que l'utilisateur obtient une page d'erreur conviviale en cas d'URL invalide.
     """
-    with patch('gudlft.server.render_template', return_value='404 page') as mock_render:
+    with patch("gudlft.server.render_template", return_value="404 page") as mock_render:
         error = MagicMock()
         response, status_code = not_found_error(error)
         mock_render.assert_called_with("404.html")
@@ -112,7 +117,7 @@ def test_500_error_handler():
     Ce test s'assure que l'utilisateur obtient une page d'erreur conviviale en cas d'erreur serveur,
     améliorant ainsi l'expérience utilisateur même dans les situations problématiques.
     """
-    with patch('gudlft.server.render_template', return_value='500 page') as mock_render:
+    with patch("gudlft.server.render_template", return_value="500 page") as mock_render:
         error = MagicMock()
         response, status_code = internal_error(error)
         mock_render.assert_called_with("500.html")
@@ -125,5 +130,5 @@ def test_logout(client):
     Vérifie que la route /logout redirige correctement vers la page d'accueil.
     Ce test complète la couverture des routes de l'application.
     """
-    response = client.get('/logout', follow_redirects=True)
-    assert response.status_code == 200 
+    response = client.get("/logout", follow_redirects=True)
+    assert response.status_code == 200

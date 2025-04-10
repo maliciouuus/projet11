@@ -43,14 +43,16 @@ from flask import (
     flash,
     url_for,
 )
-from flask_caching import Cache  # AJOUT: Système de cache pour optimiser les performances
+from flask_caching import (
+    Cache,
+)  # AJOUT: Système de cache pour optimiser les performances
 
 app = Flask(__name__)
 app.secret_key = "something_special"
 
 # AJOUT: Configuration du cache pour optimiser les performances
 # Cache SimpleCache en mémoire, idéal pour le développement
-cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache'})
+cache = Cache(app, config={"CACHE_TYPE": "SimpleCache"})
 
 # Global variables
 clubs = []
@@ -62,7 +64,7 @@ def loadClubs():
     AMÉLIORATION: Fonction de chargement des clubs avec gestion d'erreurs robuste.
     Charge les clubs depuis le fichier JSON et convertit les points en entiers.
     Gère les erreurs de fichier manquant, JSON incorrect, etc.
-    
+
     Dans la version originale:
     - Pas de gestion d'erreurs (risque de plantage)
     - Pas de conversion des types (points stockés comme chaînes)
@@ -86,7 +88,7 @@ def loadCompetitions():
     AMÉLIORATION: Fonction de chargement des compétitions avec gestion d'erreurs robuste.
     Charge les compétitions depuis le fichier JSON et convertit les places en entiers.
     Gère les erreurs de fichier manquant, JSON incorrect, etc.
-    
+
     Dans la version originale:
     - Pas de gestion d'erreurs (risque de plantage)
     - Pas de conversion des types (places stockées comme chaînes)
@@ -109,7 +111,7 @@ def saveClubs(clubs_data):
     """
     AMÉLIORATION: Fonction de sauvegarde des clubs avec conversion de types.
     Convertit les points en chaînes pour le format JSON et sauvegarde les données.
-    
+
     Changements:
     - Création de copies des objets pour éviter la modification des originaux
     - Conversion cohérente des types (entiers -> chaînes)
@@ -117,7 +119,9 @@ def saveClubs(clubs_data):
     # Convert points back to strings for JSON storage
     clubs_to_save = []
     for club in clubs_data:
-        club_copy = club.copy()  # AMÉLIORATION: Copie pour éviter de modifier l'original
+        club_copy = (
+            club.copy()
+        )  # AMÉLIORATION: Copie pour éviter de modifier l'original
         club_copy["points"] = str(club_copy["points"])
         clubs_to_save.append(club_copy)
 
@@ -129,7 +133,7 @@ def saveCompetitions(competitions_data):
     """
     AMÉLIORATION: Fonction de sauvegarde des compétitions avec conversion de types.
     Convertit les places en chaînes pour le format JSON et sauvegarde les données.
-    
+
     Changements:
     - Création de copies des objets pour éviter la modification des originaux
     - Conversion cohérente des types (entiers -> chaînes)
@@ -137,7 +141,9 @@ def saveCompetitions(competitions_data):
     # Convert numberOfPlaces back to strings for JSON storage
     comps_to_save = []
     for comp in competitions_data:
-        comp_copy = comp.copy()  # AMÉLIORATION: Copie pour éviter de modifier l'original
+        comp_copy = (
+            comp.copy()
+        )  # AMÉLIORATION: Copie pour éviter de modifier l'original
         comp_copy["numberOfPlaces"] = str(comp_copy["numberOfPlaces"])
         comps_to_save.append(comp_copy)
 
@@ -149,7 +155,7 @@ def is_competition_open(competition):
     """
     AJOUT: Fonction pour vérifier si une compétition est encore ouverte (date future).
     Gère les erreurs de format de date et renvoie False si la date est invalide.
-    
+
     Nouvelle fonctionnalité qui n'existait pas dans le code original.
     Cette fonction permet de filtrer les compétitions passées qui ne devraient
     plus être disponibles pour réservation.
@@ -179,7 +185,7 @@ def showSummary():
     AMÉLIORATION: Route d'affichage du résumé avec validation robuste de l'email.
     Gère les erreurs et renvoie des messages d'erreur appropriés.
     Filtre les compétitions pour n'afficher que celles qui sont encore ouvertes.
-    
+
     Changements:
     - Validation de l'email non vide
     - Recherche du club avec gestion d'erreur
@@ -200,9 +206,7 @@ def showSummary():
                 comp for comp in competitions if is_competition_open(comp)
             ]
             return render_template(
-                "welcome.html", 
-                club=club, 
-                competitions=open_competitions
+                "welcome.html", club=club, competitions=open_competitions
             )
         else:
             flash("Unknown email, please try again")
@@ -218,7 +222,7 @@ def book(competition, club):
     AMÉLIORATION: Route de réservation avec validation robuste.
     Vérifie l'existence du club et de la compétition.
     Vérifie si la compétition est encore ouverte avant d'autoriser la réservation.
-    
+
     Changements:
     - Validation de l'existence du club et de la compétition
     - Vérification que la compétition n'est pas passée
@@ -258,9 +262,10 @@ def book(competition, club):
 
 def get_club_competition_bookings(club_name, competition_name):
     """
-    AJOUT: Fonction pour obtenir le nombre de places déjà réservées par un club pour une compétition.
+    AJOUT: Fonction pour obtenir le nombre de places déjà réservées 
+    par un club pour une compétition.
     Utilisée pour vérifier la limite de 12 places par club et par compétition.
-    
+
     Nouvelle fonctionnalité qui n'existait pas dans le code original.
     Cette fonction permet de tracer les réservations et d'appliquer la règle
     des 12 places maximum par club et par compétition.
@@ -281,7 +286,7 @@ def save_booking(club_name, competition_name, places):
     """
     AJOUT: Fonction pour sauvegarder une réservation.
     Permet de suivre combien de places chaque club a réservé pour chaque compétition.
-    
+
     Nouvelle fonctionnalité qui n'existait pas dans le code original.
     Cette fonction sauvegarde l'historique des réservations dans un fichier JSON.
     """
@@ -302,6 +307,76 @@ def save_booking(club_name, competition_name, places):
         json.dump(bookings, f)
 
 
+def validate_booking_request(competition_name, club_name, places_str):
+    """
+    Valide les données de base d'une demande de réservation.
+    Renvoie un tuple (succès, message d'erreur, places nécessaires).
+    """
+    if not competition_name or not club_name or not places_str:
+        return False, "Error: Missing required information", None
+    
+    try:
+        places_required = int(places_str)
+    except ValueError:
+        return False, "Error: Invalid number of places", None
+    
+    if places_required <= 0:
+        return False, "Error: Invalid number of places", None
+    
+    return True, "", places_required
+
+
+def check_availability(competition, club, places_required):
+    """
+    Vérifie la disponibilité des places et les contraintes liées à la compétition.
+    Renvoie un tuple (succès, message d'erreur).
+    """
+    # Vérifier si la compétition est encore ouverte
+    if not is_competition_open(competition):
+        return False, "Error: This competition is no longer open for booking"
+    
+    # Vérifier si la compétition a des places disponibles
+    if competition["numberOfPlaces"] <= 0:
+        return False, "Error: Competition is full"
+    
+    if places_required > competition["numberOfPlaces"]:
+        return False, "Error: Not enough places available"
+    
+    # Vérifier la limite de 12 places par club
+    club_name = club["name"]
+    comp_name = competition["name"]
+    current_bookings = get_club_competition_bookings(club_name, comp_name)
+    booking_total = current_bookings + places_required
+    if booking_total > 12:
+        return False, "Error: Cannot book more than 12 places per competition"
+    
+    # Vérifier les points du club
+    if places_required > club["points"]:
+        return False, "Error: Not enough points"
+    
+    return True, ""
+
+
+def process_booking(club, competition, places_required):
+    """
+    Traite la réservation effective après validation.
+    Met à jour les points et les places, sauvegarde les changements.
+    """
+    club_name = club["name"]
+    comp_name = competition["name"]
+    
+    # Mettre à jour les points et les places
+    club["points"] = club["points"] - places_required
+    competition["numberOfPlaces"] = competition["numberOfPlaces"] - places_required
+    
+    # Sauvegarder la réservation
+    save_booking(club_name, comp_name, places_required)
+    
+    # Sauvegarder les changements dans les fichiers
+    saveClubs(clubs)
+    saveCompetitions(competitions)
+
+
 @app.route("/purchasePlaces", methods=["POST"])
 def purchasePlaces():
     """
@@ -313,7 +388,7 @@ def purchasePlaces():
     - Compétition complète
     - Dépassement des 12 places par club et par compétition
     - Points insuffisants
-    
+
     Changements majeurs par rapport à l'original:
     - Validation exhaustive des données d'entrée
     - Vérification des compétitions ouvertes
@@ -328,108 +403,51 @@ def purchasePlaces():
         clubs = loadClubs()
         competitions = loadCompetitions()
 
+        # Récupérer les données du formulaire
         competition_name = request.form.get("competition")
         club_name = request.form.get("club")
         places_str = request.form.get("places")
-
-        if not competition_name or not club_name or not places_str:
-            flash("Error: Missing required information")
+        
+        # Étape 1 : Valider les données de base
+        valid, error_msg, places_required = validate_booking_request(
+            competition_name, club_name, places_str
+        )
+        if not valid:
+            flash(error_msg)
             return redirect(url_for("index"))
-
-        try:
-            placesRequired = int(places_str)
-        except ValueError:
-            flash("Error: Invalid number of places")
-            return redirect(url_for("index"))
-
+        
+        # Étape 2 : Récupérer le club et la compétition
         competition = next(
             (c for c in competitions if c["name"] == competition_name), None
         )
         club = next((c for c in clubs if c["name"] == club_name), None)
-
+        
         if not competition or not club:
             flash("Error: Club or competition not found")
             return redirect(url_for("index"))
-
-        # AJOUT: Validation que la compétition est encore ouverte
-        if not is_competition_open(competition):
-            flash("Error: This competition is no longer open for booking")
-            open_comps = [comp for comp in competitions if is_competition_open(comp)]
-            return render_template("welcome.html", club=club, competitions=open_comps)
-
-        # AJOUT: Validation du nombre positif
-        if placesRequired <= 0:
-            flash("Error: Invalid number of places")
-            open_comps = [comp for comp in competitions if is_competition_open(comp)]
-            return render_template("welcome.html", club=club, competitions=open_comps)
-
-        # AJOUT: Validation des places disponibles dans la compétition
-        if competition["numberOfPlaces"] <= 0:
-            flash("Error: Competition is full")
-            open_comps = [comp for comp in competitions if is_competition_open(comp)]
-            return render_template("welcome.html", club=club, competitions=open_comps)
-
-        if placesRequired > competition["numberOfPlaces"]:
-            flash("Error: Not enough places available")
-            open_comps = [comp for comp in competitions if is_competition_open(comp)]
-            return render_template("welcome.html", club=club, competitions=open_comps)
-
-        # AJOUT: Validation maximum 12 places par club
-        club_name = club["name"]
-        comp_name = competition["name"]
-        current_bookings = get_club_competition_bookings(club_name, comp_name)
-        booking_total = current_bookings + placesRequired
-        if booking_total > 12:
-            flash("Error: Cannot book more than 12 places per competition")
+        
+        # Étape 3 : Vérifier la disponibilité et les contraintes
+        valid, error_msg = check_availability(competition, club, places_required)
+        if not valid:
+            flash(error_msg)
             open_comps = [
                 comp for comp in competitions if is_competition_open(comp)
             ]
-            return render_template(
-                "welcome.html", 
-                club=club, 
-                competitions=open_comps
-            )
-
-        # AMÉLIORATION: Validation des points suffisants
-        if placesRequired > club["points"]:
-            flash("Error: Not enough points")
-            open_comps = [
-                comp for comp in competitions if is_competition_open(comp)
-            ]
-            return render_template(
-                "welcome.html",
-                club=club,
-                competitions=open_comps
-            )
-
-        # Update points and places
-        club["points"] = club["points"] - placesRequired
-        new_places = competition["numberOfPlaces"] - placesRequired
-        competition["numberOfPlaces"] = new_places
-
-        # AJOUT: Sauvegarde de la réservation
-        save_booking(club["name"], competition["name"], placesRequired)
-
-        # Save changes
-        saveClubs(clubs)
-        saveCompetitions(competitions)
-
-        # Reload data to ensure consistency
+            return render_template("welcome.html", club=club, competitions=open_comps)
+        
+        # Étape 4 : Traiter la réservation
+        process_booking(club, competition, places_required)
+        
+        # Étape 5 : Recharger les données pour la cohérence
         clubs = loadClubs()
         competitions = loadCompetitions()
-
-        # Get updated club and competition for template
-        club = next((c for c in clubs if c["name"] == club_name), None)
-        open_comps = [
-            comp for comp in competitions if is_competition_open(comp)
-        ]
-
+        
+        # Récupérer les données mises à jour pour l'affichage
+        updated_club = next((c for c in clubs if c["name"] == club_name), None)
+        open_comps = [comp for comp in competitions if is_competition_open(comp)]
+        
         flash("Great-booking complete!")
-        return render_template(
-            "welcome.html",
-            club=club,
-            competitions=open_comps
-        )
+        return render_template("welcome.html", club=updated_club, competitions=open_comps)
 
     except Exception as e:
         flash(f"Error: {str(e)}")
@@ -449,7 +467,7 @@ def api_points():
     AJOUT: API endpoint pour récupérer les points des clubs.
     Implémente un cache de 30 secondes pour optimiser les performances.
     Renvoie les points des clubs au format JSON.
-    
+
     Nouvelle fonctionnalité qui n'existait pas dans le code original.
     Cette API RESTful permet l'accès aux données des clubs au format JSON,
     avec mise en cache pour optimiser les performances.
@@ -457,8 +475,7 @@ def api_points():
     try:
         clubs_data = loadClubs()
         clubs_points = [
-            {"name": club["name"], "points": club["points"]} 
-            for club in clubs_data
+            {"name": club["name"], "points": club["points"]} for club in clubs_data
         ]
         return {"clubs": clubs_points}
     except Exception as e:
