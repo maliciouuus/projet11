@@ -1,0 +1,7 @@
+README.md
+setup.py
+gudlft.egg-info/PKG-INFO
+gudlft.egg-info/SOURCES.txt
+gudlft.egg-info/dependency_links.txt
+gudlft.egg-info/requires.txt
+gudlft.egg-info/top_level.txt
