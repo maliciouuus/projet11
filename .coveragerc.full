@@ -1,0 +1,18 @@
+[run]
+source = gudlft/
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    pass
+
+omit =
+    */site-packages/*
+    */dist-packages/*
+    */six.py
+    */.local/lib/*
+    */usr/lib/*
+    run.py 
